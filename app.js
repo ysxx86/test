@@ -58,7 +58,6 @@ userForm.addEventListener('submit', async (e) => {
         await user.save();
         resetForm();
         loadUsers();
-        alert('保存成功！');
     } catch (error) {
         alert('保存失败：' + error.message);
     }
@@ -86,7 +85,6 @@ async function deleteUser(id) {
         const user = AV.Object.createWithoutData('UserInfo', id);
         await user.destroy();
         loadUsers();
-        alert('删除成功！');
     } catch (error) {
         alert('删除失败：' + error.message);
     }
@@ -100,3 +98,45 @@ function resetForm() {
 
 // 页面加载时获取用户列表
 document.addEventListener('DOMContentLoaded', loadUsers);
+
+// 实时查询对象
+let liveQuery;
+
+// 初始化实时查询
+async function initLiveQuery() {
+    try {
+        const query = new AV.Query('UserInfo');
+        liveQuery = await query.subscribe();
+
+        // 监听数据创建事件
+        liveQuery.on('create', () => {
+            loadUsers();
+        });
+
+        // 监听数据更新事件
+        liveQuery.on('update', () => {
+            loadUsers();
+        });
+
+        // 监听数据删除事件
+        liveQuery.on('delete', () => {
+            loadUsers();
+        });
+
+    } catch (error) {
+        console.error('实时查询初始化失败：', error);
+    }
+}
+
+// 页面加载时初始化实时查询
+document.addEventListener('DOMContentLoaded', () => {
+    loadUsers();
+    initLiveQuery();
+});
+
+// 页面关闭时取消订阅
+window.addEventListener('beforeunload', () => {
+    if (liveQuery) {
+        liveQuery.unsubscribe();
+    }
+});
