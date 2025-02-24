@@ -43,6 +43,20 @@ userForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
     try {
+        // 检查用户名是否已存在
+        const query = new AV.Query('UserInfo');
+        query.equalTo('username', usernameInput.value);
+        
+        // 如果是编辑模式，排除当前用户
+        if (objectIdInput.value) {
+            query.notEqualTo('objectId', objectIdInput.value);
+        }
+        
+        const existingUser = await query.first();
+        if (existingUser) {
+            throw new Error('该用户名已存在，请使用其他用户名');
+        }
+        
         let user;
         if (objectIdInput.value) {
             // 更新现有用户
